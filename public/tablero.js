@@ -106,7 +106,8 @@ function dibujar() {
         ficha.append(video);
         continue;
       }
-      const a = vinculo(url, '', 'imagen');
+      const enFlickr = pin.enlace && new URL(pin.enlace).hostname === 'www.flickr.com';
+      const a = vinculo(enFlickr ? pin.enlace : url, '', 'imagen');
       const imagen = crear('img');
       imagen.loading = 'lazy';
       imagen.referrerPolicy = 'no-referrer';
