@@ -13,8 +13,14 @@ function avisar(texto) { porId('estado').textContent = texto; }
 async function api(ruta, opciones = {}) {
   const headers = new Headers(opciones.headers);
   if (clave) headers.set('Authorization', 'Bearer ' + clave);
-  const respuesta = await fetch('/api/' + ruta, { ...opciones, headers });
-  const datos = await respuesta.json();
+  let respuesta;
+  try {
+    respuesta = await fetch('/api/' + ruta, { ...opciones, headers });
+  } catch {
+    throw new Error('No se pudo conectar con el tablero. Revisá la conexión.');
+  }
+  const datos = await respuesta.json().catch(() => null);
+  if (!datos) throw new Error('El tablero no pudo completar la operación. Volvé a intentarlo.');
   if (!respuesta.ok) throw new Error(datos.error || 'No se pudo completar la operación.');
   return datos;
 }
@@ -194,4 +200,28 @@ if (clave) {
   try { await api('edicion'); establecerEdicion(true); }
   catch { clave = ''; sessionStorage.removeItem('edicion'); }
 }
-await conEspera(() => cargar());
+const reintentar = porId('reintentar-tablero');
+function cargarTablero() {
+  return conEspera(async () => {
+    const zonaPines = porId('pines');
+    zonaPines.setAttribute('aria-busy', 'true');
+    if (!reintentar.hidden) {
+      reintentar.setAttribute('aria-disabled', 'true');
+      avisar('Cargando el tablero…');
+    }
+    try {
+      await cargar();
+      const devolverFoco = document.activeElement === reintentar;
+      reintentar.hidden = true;
+      if (devolverFoco) porId('titulo-tablero').focus({ preventScroll: true });
+    } catch (error) {
+      reintentar.hidden = false;
+      throw error;
+    } finally {
+      zonaPines.removeAttribute('aria-busy');
+      reintentar.removeAttribute('aria-disabled');
+    }
+  });
+}
+reintentar.onclick = cargarTablero;
+await cargarTablero();
