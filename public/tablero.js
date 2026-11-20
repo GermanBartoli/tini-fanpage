@@ -48,10 +48,17 @@ async function conEspera(operacion) {
   try { await operacion(); } catch (error) { avisar(error.message); }
   finally { ocupado = false; }
 }
+async function leerPagina(desde) {
+  const pagina = await api('pines?desde=' + desde);
+  if (!Array.isArray(pagina?.pines) || (pagina.hayMas && pagina.pines.length === 0)) {
+    throw new Error('No se pudo cargar la página del tablero. Volvé a intentarlo.');
+  }
+  return pagina;
+}
 async function cargar(cantidad = 48) {
   let lista = [], pagina;
   do {
-    pagina = await api('pines?desde=' + lista.length);
+    pagina = await leerPagina(lista.length);
     lista.push(...pagina.pines);
   } while (pagina.hayMas && lista.length < cantidad);
   pines = lista;
@@ -149,7 +156,7 @@ function dibujar() {
   porId('mas').hidden = !hayMas;
 }
 porId('mas').onclick = () => conEspera(async () => {
-  const pagina = await api('pines?desde=' + pines.length);
+  const pagina = await leerPagina(pines.length);
   pines.push(...pagina.pines);
   hayMas = pagina.hayMas;
   dibujar();
