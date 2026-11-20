@@ -106,9 +106,13 @@ function dibujar() {
         const video = crear('video');
         video.controls = true;
         video.playsInline = true;
-        video.preload = 'metadata';
+        video.preload = 'none';
         video.src = url;
         video.setAttribute('aria-label', pin.titulo || 'Video del tablero');
+        video.addEventListener('error', () => {
+          const enlace = vinculo(pin.enlace || url, pin.enlace ? 'Ver el video en la publicación ↗' : 'Abrir video original ↗', 'imagen');
+          video.replaceWith(enlace);
+        }, { once: true });
         ficha.append(video);
         continue;
       }
@@ -119,7 +123,10 @@ function dibujar() {
       imagen.referrerPolicy = 'no-referrer';
       imagen.src = url;
       imagen.alt = (pin.titulo || 'Foto del tablero') + (pin.fotos.length > 1 ? ' · ' + (i + 1) : '');
-      imagen.onerror = () => { a.textContent = 'Abrir foto original ↗'; };
+      imagen.onerror = () => {
+        if (pin.enlace) a.href = pin.enlace;
+        a.textContent = pin.enlace ? 'Ver la foto en la publicación ↗' : 'Abrir foto original ↗';
+      };
       a.append(imagen);
       ficha.append(a);
     }
