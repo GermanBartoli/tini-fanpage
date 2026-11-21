@@ -16,6 +16,12 @@ function fallo(mensaje, estado) {
 async function esEditor(pedido, entorno) {
   const clave = pedido.headers.get('Authorization')?.match(/^Bearer (.{1,160})$/)?.[1];
   if (!clave || !entorno.CLAVE_EDICION) return false;
+  const ip = pedido.headers.get('CF-Connecting-IP') || 'local';
+  const limite = await entorno.LIMITE_EDICION.limit({ key: ip });
+  if (!limite.success) {
+    console.warn('Límite de solicitudes de edición alcanzado');
+    fallo('Demasiados intentos de edición. Esperá un minuto.', 429);
+  }
   const hash = valor => crypto.subtle.digest('SHA-256', encoder.encode(valor));
   const [recibida, esperada] = await Promise.all([hash(clave), hash(entorno.CLAVE_EDICION)]);
   return crypto.subtle.timingSafeEqual(recibida, esperada);

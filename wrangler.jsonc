@@ -9,6 +9,9 @@
     "binding": "ASSETS",
     "run_worker_first": true
   },
+  "ratelimits": [
+    { "name": "LIMITE_EDICION", "namespace_id": "92710681", "simple": { "limit": 30, "period": 60 } }
+  ],
   "observability": {
     "enabled": true,
     "traces": {
