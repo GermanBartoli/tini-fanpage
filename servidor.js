@@ -106,6 +106,10 @@ async function mover(pedido, db) {
 export default {
   async fetch(pedido, entorno) {
     const url = new URL(pedido.url);
+    if (url.protocol === 'http:' && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
+      url.protocol = 'https:';
+      return Response.redirect(url.href, 308);
+    }
     if (!url.pathname.startsWith('/api/')) return entorno.ASSETS.fetch(pedido);
     const db = entorno.DB;
     try {
